@@ -16,7 +16,6 @@ export async function handleFileLogic<T extends Parse.Object>(
   id: string | undefined,
   attributeName: string
 ): Promise<void> {
-  // no file uploaded
   if (!file) return;
 
   const className = object.className;
@@ -42,7 +41,6 @@ export async function handleFileLogic<T extends Parse.Object>(
 
   if (file?.base64) {
     const fileUpload = await createFileFromBase64(file.base64, file.name);
-    //  console.log('fileUpload', fileUpload);
     fileObj.file = fileUpload;
   }
 
@@ -88,6 +86,5 @@ export async function handleFileArrayLogic<T extends Parse.Object>(
     newFiles.push(fileObj);
   }
 
-  // ✅ Always overwrite with new list
   object.set(attributeName, newFiles);
 }

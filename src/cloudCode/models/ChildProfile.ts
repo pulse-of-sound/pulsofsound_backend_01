@@ -3,14 +3,13 @@ import {ParseClass, ParseField} from '../utils/decorator/baseDecorator';
 
 @ParseClass('ChildProfile', {
   clp: {
-    find: { '*': true },
-    get: { '*': true },
-    create: { '*': true },
-    update: { '*': true },
-    delete: { '*': true },
+    find: {'*': true},
+    get: {'*': true},
+    create: {'*': true},
+    update: {'*': true},
+    delete: {'*': true},
   },
 })
-
 export default class ChildProfile extends BaseModel {
   constructor() {
     super('ChildProfile');

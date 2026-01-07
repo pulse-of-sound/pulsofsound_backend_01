@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-require('dotenv').config();
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const appId = process.env.appId!;
 const restAPIKey = process.env.restAPIKey!;

@@ -5,9 +5,9 @@ type RoleRule = {role: string; read?: boolean; write?: boolean};
 export function implementACL(params: {
   publicRead?: boolean;
   publicWrite?: boolean;
-  roleRules: RoleRule[]; // roles with normal role-level read/write
-  excludedRoles?: string[]; // roles that MUST NOT get role-level access (owner-only)
-  owner?: {user: string | User; read?: boolean; write?: boolean}; // “own” access
+  roleRules: RoleRule[];
+  excludedRoles?: string[];
+  owner?: {user: string | User; read?: boolean; write?: boolean};
 }): Parse.ACL {
   const {
     publicRead = false,
@@ -17,20 +17,17 @@ export function implementACL(params: {
     owner,
   } = params;
 
-  //const excludedRoles2 = new Set(excludedRoles);
   const acl = new Parse.ACL();
 
-  acl.setPublicReadAccess(!!publicRead); //double negation operator that converts any value to a boolean.
+  acl.setPublicReadAccess(!!publicRead);
   acl.setPublicWriteAccess(!!publicWrite);
 
-  // Apply role level rules
   for (const {role, read = false, write = false} of roleRules) {
-    if (excludedRoles.includes(role)) continue; // owner-only: no role-level access on the object
+    if (excludedRoles.includes(role)) continue;
     if (read) acl.setRoleReadAccess(role, true);
     acl.setRoleWriteAccess(role, !!write);
   }
 
-  // Owner access (creator)
   if (owner) {
     if (owner.read) acl.setReadAccess(owner.user, true);
     if (owner.write) acl.setWriteAccess(owner.user, true);
@@ -38,7 +35,6 @@ export function implementACL(params: {
 
   return acl;
 }
- 
 export async function hasRole(
   user: Parse.User,
   roleName: string

@@ -22,7 +22,7 @@ export default class ResearchPosts extends BaseModel {
   body!: string;
 
   @ParseField('String', true)
-  status!: string; // pending / published / rejected
+  status!: string;
 
   @ParseField('String', false)
   rejection_reason?: string;

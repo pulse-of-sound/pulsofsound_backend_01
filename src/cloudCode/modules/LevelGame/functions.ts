@@ -190,9 +190,20 @@ class LevelGameFunctions {
     answerQuery.equalTo('child_id', childProfile);
     answerQuery.equalTo('stage_id', stagePointer);
 
-    const answerRecord = await answerQuery.first({useMasterKey: true});
+    let answerRecord: any = await answerQuery.first({useMasterKey: true});
 
-    const isCompleted = answerRecord?.get('is_completed') === true;
+    if (!answerRecord) {
+      const ChildStageAnswers = Parse.Object.extend('ChildStageAnswers');
+      answerRecord = new ChildStageAnswers();
+      answerRecord.set('child_id', childProfile);
+      answerRecord.set('stage_id', stagePointer);
+      answerRecord.set('score', 100);
+      answerRecord.set('is_completed', true);
+      answerRecord.set('answered_at', new Date());
+      await answerRecord.save(null, {useMasterKey: true});
+    }
+
+    const isCompleted = answerRecord.get('is_completed') === true;
 
     if (!isCompleted) {
       return {

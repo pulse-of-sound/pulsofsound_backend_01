@@ -1,12 +1,6 @@
 import User from '../../models/User';
 import {CloudFunction} from '../../utils/Registry/decorators';
 import {UserRoles} from '../../utils/constants';
-import {handleImageLogic} from '../../utils/handleImage';
-import {
-  sharedGetFields,
-  WithSharedGetParams,
-} from '../../utils/sharedGetFields';
-
 class UserManagement_ {
   @CloudFunction({
     methods: ['POST'],

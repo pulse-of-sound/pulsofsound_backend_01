@@ -3,11 +3,11 @@ import {ParseClass, ParseField} from '../utils/decorator/baseDecorator';
 
 @ParseClass('TrainingQuestionCorrectAnswer', {
   clp: {
-    find: { '*': true },
-    get: { '*': true },
-    create: { '*': true },
-    update: { '*': true },
-    delete: { '*': true },
+    find: {'*': true},
+    get: {'*': true},
+    create: {'*': true},
+    update: {'*': true},
+    delete: {'*': true},
   },
 })
 export default class TrainingQuestionCorrectAnswer extends BaseModel {

@@ -3,22 +3,54 @@ import {CloudFunction} from '../../utils/Registry/decorators';
 
 class ChildProfile_ {
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
-      fields: {},
+      requireUser: false,
+      fields: {
+        child_id: {required: false, type: String},
+      },
     },
   })
   async getMyChildProfile(req: Parse.Cloud.FunctionRequest) {
     try {
-      if (!req.user) {
+      const {child_id} = req.params;
+      let user: Parse.User | undefined;
+
+      // إذا كان child_id موجود، استخدمه
+      if (child_id) {
+        const userQuery = new Parse.Query(Parse.User);
+        user = await userQuery.get(child_id, {useMasterKey: true});
+      } else if (req.user) {
+        // وإلا استخدم req.user إذا كان موجود
+        user = req.user;
+      } else {
+        const sessionToken = (req as any).headers[
+          'x-parse-session-token'
+        ] as string;
+        if (sessionToken) {
+          const sessionQuery = new Parse.Query(Parse.Session);
+          sessionQuery.equalTo('sessionToken', sessionToken);
+          sessionQuery.include('user');
+          const session = await sessionQuery.first({useMasterKey: true});
+          if (session) {
+            user = session.get('user');
+          }
+        }
+      }
+
+      if (!user) {
         throw {
           codeStatus: 103,
           message: 'User context is missing',
         };
       }
 
-      const user = req.user;
+      if (!user) {
+        throw {
+          codeStatus: 103,
+          message: 'User not found',
+        };
+      }
       const rolePointer = user.get('role');
 
       const role = await new Parse.Query(Parse.Role)
@@ -35,7 +67,7 @@ class ChildProfile_ {
 
       const query = new Parse.Query(ChildProfile);
       query.equalTo('user', user);
-      query.includeAll();
+      query.include('user');
 
       let child = await query.first({useMasterKey: true});
 
@@ -112,13 +144,44 @@ class ChildProfile_ {
 
       if (name) profile.set('name', name);
       if (fatherName) profile.set('fatherName', fatherName);
-      if (birthdate) profile.set('birthdate', birthdate);
+
+      // تحويل birthdate من String إلى Date
+      if (birthdate) {
+        try {
+          let dateObj: Date;
+          if (typeof birthdate === 'string' && birthdate.includes('/')) {
+            const [day, month, year] = birthdate.split('/').map(Number);
+            dateObj = new Date(year, month - 1, day);
+          } else {
+            dateObj = new Date(birthdate);
+          }
+
+          if (!isNaN(dateObj.getTime())) {
+            profile.set('birthdate', dateObj);
+          } else {
+            console.warn('Invalid birthdate format:', birthdate);
+          }
+        } catch (e) {
+          console.warn('Error parsing birthdate:', e);
+        }
+      }
+
       if (gender) profile.set('gender', gender);
       if (medical_info) profile.set('medical_info', medical_info);
 
-      await profile.save(null, {useMasterKey: true});
+      if (name) user.set('fullName', name);
+      if (fatherName) user.set('fatherName', fatherName);
 
-      return profile.toJSON();
+      await Promise.all([
+        profile.save(null, {useMasterKey: true}),
+        user.save(null, {useMasterKey: true}),
+      ]);
+
+      const finalProfile = await new Parse.Query(ChildProfile)
+        .include('user')
+        .get(profile.id, {useMasterKey: true});
+
+      return finalProfile;
     } catch (error: any) {
       console.error('Error in createOrUpdateChildProfile:', error);
       if (error.codeStatus) {

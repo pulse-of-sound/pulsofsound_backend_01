@@ -1,15 +1,13 @@
-import { BaseModel } from '../utils/BaseModel';
-import { ParseClass, ParseField } from '../utils/decorator/baseDecorator';
-import ResearchCategories from './ResearchCategories';
-import ResearchPosts from './ResearchPosts';
+import {BaseModel} from '../utils/BaseModel';
+import {ParseClass, ParseField} from '../utils/decorator/baseDecorator';
 
 @ParseClass('PostCategories', {
   clp: {
-    find: { '*': true },
-    get: { '*': true },
-    create: { '*': true },
-    update: { '*': true },
-    delete: { '*': true },
+    find: {'*': true},
+    get: {'*': true},
+    create: {'*': true},
+    update: {'*': true},
+    delete: {'*': true},
   },
 })
 export default class PostCategories extends BaseModel {

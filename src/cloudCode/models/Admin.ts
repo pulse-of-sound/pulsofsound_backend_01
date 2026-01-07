@@ -23,5 +23,3 @@ export default class Admin extends Parse.Object {
   @ParseField('Boolean', false)
   isActive?: boolean;
 }
-
-

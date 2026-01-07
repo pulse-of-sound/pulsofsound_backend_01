@@ -15,8 +15,8 @@ export default class WalletTransaction extends BaseModel {
     super('WalletTransaction');
   }
 
-  @ParseField('Pointer', true, 'Wallet')
-  from_wallet!: Parse.Object;
+  @ParseField('Pointer', false, 'Wallet')
+  from_wallet?: Parse.Object;
 
   @ParseField('Pointer', true, 'Wallet')
   to_wallet!: Parse.Object;

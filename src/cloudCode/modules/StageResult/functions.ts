@@ -3,6 +3,8 @@ import StageQuestion from '../../models/StageQuestion';
 import LevelGame from '../../models/LevelGame';
 import StageResult from '../../models/StageResult';
 import UserStageStatus from '../../models/UserStageStatus';
+import ChildLevel from '../../models/ChildLevel';
+import Level from '../../models/Level';
 
 interface AnswerInput {
   question_id: string;
@@ -13,8 +15,9 @@ class StageResultFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
+        child_id: {required: true, type: String},
         level_game_id: {required: true, type: String},
         answers: {required: true, type: Array},
       },
@@ -22,27 +25,41 @@ class StageResultFunctions {
   })
   async submitStageAnswers(req: Parse.Cloud.FunctionRequest) {
     try {
-      const {level_game_id} = req.params;
+      console.log('submitStageAnswers called');
+      const {child_id, level_game_id} = req.params;
       const answers = req.params.answers as AnswerInput[];
-      const user = req.user;
+
+      console.log(' Child ID:', child_id);
+      console.log(' Level Game ID:', level_game_id);
+      console.log(' Answers:', JSON.stringify(answers));
+
+      // الحصول على المستخدم من child_id
+      const userQuery = new Parse.Query(Parse.User);
+      const user = await userQuery.get(child_id, {useMasterKey: true});
 
       if (!user) {
+        console.log(' User not found');
         throw {
-          codeStatus: 401,
-          message: 'Unauthorized: user not found',
+          codeStatus: 404,
+          message: 'User not found',
         };
       }
+
+      console.log(' User found:', user.id);
 
       const stagePointer = await new Parse.Query(LevelGame)
         .equalTo('objectId', level_game_id)
         .first({useMasterKey: true});
 
       if (!stagePointer) {
+        console.log(' LevelGame not found');
         throw {
           codeStatus: 404,
           message: 'LevelGame not found',
         };
       }
+
+      console.log(' LevelGame found:', stagePointer.id);
 
       const questionIds = answers.map((a: AnswerInput) => a.question_id);
       const query = new Parse.Query(StageQuestion);
@@ -100,6 +117,8 @@ class StageResultFunctions {
       result.set('updated_at', new Date());
 
       await result.save(null, {useMasterKey: true});
+      console.log(' StageResult saved successfully:', result.id);
+      console.log(' Score:', correctCount, '/', stageQuestions.length);
 
       const statusQuery = new Parse.Query(UserStageStatus);
       statusQuery.equalTo('user_id', user);
@@ -112,8 +131,14 @@ class StageResultFunctions {
         existingStatus.set('status', 'completed');
         existingStatus.set('completed_at', now);
         existingStatus.set('score', correctCount);
+        existingStatus.set('last_play_date', now);
         existingStatus.increment('attempts', 1);
+        existingStatus.increment('current_stage', 1);
         await existingStatus.save(null, {useMasterKey: true});
+        console.log(
+          'UserStageStatus updated: current_stage =',
+          existingStatus.get('current_stage')
+        );
       } else {
         const newStatus = new UserStageStatus();
         newStatus.set('user_id', user);
@@ -122,7 +147,77 @@ class StageResultFunctions {
         newStatus.set('completed_at', now);
         newStatus.set('score', correctCount);
         newStatus.set('attempts', 1);
+        newStatus.set('current_stage', 1);
+        newStatus.set('last_play_date', now);
         await newStatus.save(null, {useMasterKey: true});
+        console.log('UserStageStatus created: current_stage = 1');
+      }
+
+      let childProfile;
+      try {
+        const childProfileQuery = new Parse.Query('ChildProfile');
+        childProfileQuery.equalTo('user', user);
+        childProfile = await childProfileQuery.first({useMasterKey: true});
+
+        if (childProfile) {
+          childProfile.set('last_play_date', now);
+          await childProfile.save(null, {useMasterKey: true});
+          console.log(
+            ' Updated global last_play_date on ChildProfile for user:',
+            user.id
+          );
+        } else {
+          console.log(' ChildProfile not found for global date update');
+        }
+      } catch (cpError) {
+        console.error(
+          '❌د Error updating ChildProfile last_play_date:',
+          cpError
+        );
+      }
+
+      try {
+        const currentStageNum = existingStatus
+          ? existingStatus.get('current_stage')
+          : 1;
+
+        if (currentStageNum > 10 && childProfile) {
+          const childLevelQuery = new Parse.Query(ChildLevel);
+          childLevelQuery.equalTo('child_id', childProfile);
+          let childLevel = await childLevelQuery.first({useMasterKey: true});
+
+          if (!childLevel) {
+            console.log(' ChildLevel not found, creating new one...');
+            const firstLevel = await new Parse.Query(Level)
+              .ascending('order')
+              .first({useMasterKey: true});
+            if (firstLevel) {
+              childLevel = new ChildLevel();
+              childLevel.set('child_id', childProfile);
+              childLevel.set('level_id', firstLevel);
+              childLevel.set('current_game_order', 1);
+              await childLevel.save(null, {useMasterKey: true});
+              console.log(' Created new ChildLevel with order 1');
+            }
+          }
+
+          if (childLevel) {
+            const currentGroupOrder = childLevel.get('current_game_order');
+            const playedGroupOrder = stagePointer.get('order');
+
+            // تأكد من أننا نلعب في المجموعة الحالية قبل التحديث
+            if (playedGroupOrder === currentGroupOrder) {
+              childLevel.increment('current_game_order', 1);
+              await childLevel.save(null, {useMasterKey: true});
+              console.log(
+                '🎉 Group Completed! Advanced to Group Order:',
+                currentGroupOrder + 1
+              );
+            }
+          }
+        }
+      } catch (lvlError) {
+        console.error(' Error advancing ChildLevel:', lvlError);
       }
 
       return {

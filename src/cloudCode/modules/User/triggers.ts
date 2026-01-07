@@ -14,7 +14,7 @@ Parse.Cloud.afterSave(User, async req => {
           {role: UserRoles.SUPER_ADMIN, read: true, write: true},
           {role: UserRoles.SUPER_ADMIN, read: true, write: true},
         ],
-        owner: {user: obj.id, read: true, write: true}, // when client create account
+        owner: {user: obj.id, read: true, write: true},
       })
     );
   }
@@ -22,23 +22,17 @@ Parse.Cloud.afterSave(User, async req => {
 Parse.Cloud.beforeSave('StaffProfile', async request => {
   const staffProfile = request.object;
 
-  // Only set ACL if it's not already set
   if (!staffProfile.getACL()) {
     const acl = new Parse.ACL();
 
-    // Give access to the linked user, if available
     const user = request.user;
     if (user) {
       acl.setReadAccess(user.id, true);
       acl.setWriteAccess(user.id, true);
     }
 
-    // Optional: Give access to roles
     acl.setRoleWriteAccess('Admin', true);
     acl.setRoleReadAccess('Admin', true);
-
-    // Optional: Public read access
-    // acl.setPublicReadAccess(true);
 
     staffProfile.setACL(acl);
   }

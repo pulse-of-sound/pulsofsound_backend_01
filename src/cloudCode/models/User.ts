@@ -56,8 +56,20 @@ export default class User extends Parse.User {
   @ParseField('String', false)
   fatherName!: string;
 
+  @ParseField('String', false)
+  gender!: string;
+
+  @ParseField('String', false)
+  medical_info!: string;
+
+  @ParseField('String', false)
+  specialty!: string;
+
   @ParseField('File', false)
   profilePic!: Parse.File;
+
+  @ParseField('String', false)
+  passwordDisplay!: string;
 
   static map(user?: User, assignedRole?: Parse.Role) {
     if (!user) {
@@ -75,7 +87,17 @@ export default class User extends Parse.User {
       fullName: user.get('fullName'),
       birthDate: user.get('birthDate'),
       fatherName: user.get('fatherName'),
-      profilePic: user.get('profilePic'),
+      gender: user.get('gender'),
+      specialty: user.get('specialty'),
+      medical_info: user.get('medical_info'),
+      profilePic: user.get('profilePic')
+        ? {
+            __type: 'File',
+            name: user.get('profilePic').name(),
+            url: user.get('profilePic').url(),
+          }
+        : null,
+      placement_test_score: user.get('placement_test_score'),
     };
 
     const flattenedObject = {

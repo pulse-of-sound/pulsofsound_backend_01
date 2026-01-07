@@ -1,6 +1,19 @@
 import {CloudFunction} from '../../utils/Registry/decorators';
 import ResearchCategories from '../../models/ResearchCategories';
 
+async function _getUser(req: Parse.Cloud.FunctionRequest) {
+  if (req.user) return req.user;
+
+  const sessionToken = (req as any).headers?.['x-parse-session-token'];
+  if (!sessionToken) return null;
+
+  const sessionQuery = new Parse.Query(Parse.Session);
+  sessionQuery.equalTo('sessionToken', sessionToken);
+  sessionQuery.include('user');
+  const session = await sessionQuery.first({useMasterKey: true});
+  return session?.get('user') || null;
+}
+
 class ResearchCategoriesFunctions {
   @CloudFunction({
     methods: ['POST'],
@@ -12,8 +25,8 @@ class ResearchCategoriesFunctions {
     },
   })
   async createResearchCategory(req: Parse.Cloud.FunctionRequest) {
-    const user = req.user;
-    if (!user) throw new Error('User is not logged in');
+    const user = await _getUser(req);
+    if (!user) throw {code: 141, message: 'User is not logged in'};
 
     const role = await user.get('role')?.fetch({useMasterKey: true});
     if (!role || role.get('name') !== 'Admin') {
@@ -33,9 +46,9 @@ class ResearchCategoriesFunctions {
     };
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
     },
   })
   async getAllResearchCategories(req: Parse.Cloud.FunctionRequest) {

@@ -12,7 +12,7 @@ class AppointmentFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         child_id: {type: String, required: true},
         provider_id: {type: String, required: true},
@@ -23,7 +23,23 @@ class AppointmentFunctions {
   })
   async requestPsychologistAppointment(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      // التحقق من Session Token
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -87,7 +103,7 @@ class AppointmentFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         child_id: {type: String, required: true},
       },
@@ -95,7 +111,18 @@ class AppointmentFunctions {
   })
   async getChildAppointments(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -127,7 +154,9 @@ class AppointmentFunctions {
         },
         provider: {
           id: app.get('provider_id')?.id,
-          name: app.get('provider_id')?.get('username'),
+          name:
+            app.get('provider_id')?.get('fullName') ||
+            app.get('provider_id')?.get('username'),
         },
       }));
 
@@ -143,7 +172,7 @@ class AppointmentFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         appointment_id: {type: String, required: true},
       },
@@ -151,7 +180,18 @@ class AppointmentFunctions {
   })
   async getAppointmentDetails(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -209,55 +249,100 @@ class AppointmentFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
     },
   })
   async getPendingAppointmentsForProvider(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
 
       const query = new Parse.Query(Appointment);
       query.equalTo('provider_id', user);
-      query.equalTo('status', 'pending_provider_approval');
       query.include(['appointment_plan_id', 'child_id', 'user_id']);
       query.descending('createdAt');
 
       const results = await query.find({useMasterKey: true});
 
-      const formatted = results.map(app => {
-        const plan = app.get('appointment_plan_id');
-        const child = app.get('child_id');
-        const requestedBy = app.get('user_id');
+      const formatted = await Promise.all(
+        results.map(async app => {
+          const plan = app.get('appointment_plan_id');
+          const child = app.get('child_id');
+          const requestedBy = app.get('user_id');
 
-        return {
-          id: app.id,
-          note: app.get('note'),
-          created_at: app.get('created_at'),
-          appointment_plan: plan
-            ? {
-                id: plan.id,
-                title: plan.get('title'),
-                duration_minutes: plan.get('duration_minutes'),
-                price: plan.get('price'),
-              }
-            : {},
-          child: child
-            ? {
-                id: child.id,
-                name: child.get('fullName'),
-              }
-            : {},
-          requested_by: requestedBy
-            ? {
-                id: requestedBy.id,
-                name: requestedBy.get('username'),
-              }
-            : {},
-        };
-      });
+          const chatGroup = await new Parse.Query(ChatGroup)
+            .equalTo('appointment_id', app)
+            .equalTo('chat_status', 'active')
+            .first({useMasterKey: true});
+
+          console.log(
+            'App Item - Child:',
+            child?.id,
+            'requestedBy:',
+            requestedBy?.id
+          );
+
+          return {
+            id: app.id,
+            status: app.get('status'),
+            note: app.get('note'),
+            created_at: app.createdAt,
+            appointment_plan: plan
+              ? {
+                  id: plan.id,
+                  title: plan.get('title'),
+                  duration_minutes: plan.get('duration_minutes'),
+                  price: plan.get('price'),
+                }
+              : {},
+            child: child
+              ? {
+                  id: child.id,
+                  name:
+                    child.get('fullName') ||
+                    child.get('name') ||
+                    child.get('mobileNumber') ||
+                    child.get('username') ||
+                    (requestedBy
+                      ? requestedBy.get('fullName') ||
+                        requestedBy.get('mobileNumber')
+                      : null) ||
+                    child.id,
+                }
+              : {
+                  name: requestedBy
+                    ? requestedBy.get('fullName') ||
+                      requestedBy.get('mobileNumber') ||
+                      'طفل'
+                    : 'طفل',
+                },
+            requestedBy: requestedBy
+              ? {
+                  id: requestedBy.id,
+                  name:
+                    requestedBy.get('fullName') ||
+                    requestedBy.get('mobileNumber') ||
+                    requestedBy.get('username') ||
+                    requestedBy.id,
+                }
+              : null,
+            chat_group_id: chatGroup?.id || null,
+          };
+        })
+      );
 
       return formatted;
     } catch (error: any) {
@@ -339,7 +424,7 @@ class AppointmentFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         appointment_id: {type: String, required: true},
         decision: {type: String, required: true},
@@ -348,7 +433,18 @@ class AppointmentFunctions {
   })
   async handleAppointmentDecision(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) throw {codeStatus: 103, message: 'User context is missing'};
 
       const {appointment_id, decision} = req.params;
@@ -391,18 +487,34 @@ class AppointmentFunctions {
         if (!price || price <= 0)
           throw {codeStatus: 107, message: 'Invalid plan price'};
 
-        const walletQuery = new Parse.Query(Wallet);
-        const requesterWallet = await walletQuery
+        const requesterWalletQuery = new Parse.Query(Wallet);
+        let requesterWallet = await requesterWalletQuery
           .equalTo('user_id', requester)
           .first({useMasterKey: true});
-        const providerWallet = await walletQuery
+
+        if (!requesterWallet) {
+          requesterWallet = new Wallet();
+          requesterWallet.set('user_id', requester);
+          requesterWallet.set('balance', 0);
+          await requesterWallet.save(null, {useMasterKey: true});
+        }
+
+        const providerWalletQuery = new Parse.Query(Wallet);
+        let providerWallet = await providerWalletQuery
           .equalTo('user_id', provider)
           .first({useMasterKey: true});
+
+        if (!providerWallet) {
+          providerWallet = new Wallet();
+          providerWallet.set('user_id', provider);
+          providerWallet.set('balance', 0);
+          await providerWallet.save(null, {useMasterKey: true});
+        }
 
         if (!requesterWallet || !providerWallet) {
           throw {
             codeStatus: 108,
-            message: 'Wallets not found for requester or provider',
+            message: 'Failed to retrieve or create wallets',
           };
         }
 
@@ -433,7 +545,21 @@ class AppointmentFunctions {
 
         chatGroup = new ChatGroup();
         chatGroup.set('appointment_id', appointment);
-        chatGroup.set('child_id', appointment.get('child_id'));
+
+        const childId = appointment.get('child_id');
+        console.log(
+          `Creating ChatGroup for appointment ${appointment.id}: child_id = ${
+            childId?.id || 'NULL'
+          }`
+        );
+
+        if (childId) {
+          chatGroup.set('child_id', childId);
+        } else {
+          console.warn(`Appointment ${appointment.id} has no child_id!`);
+        }
+
+        chatGroup.set('chat_type', 'private');
         chatGroup.set('chat_status', 'active');
         await chatGroup.save(null, {useMasterKey: true});
 
@@ -516,6 +642,70 @@ class AppointmentFunctions {
       throw {
         codeStatus: error.codeStatus || 1012,
         message: error.message || 'Failed to handle appointment decision',
+      };
+    }
+  }
+  @CloudFunction({
+    methods: ['POST'],
+    validation: {
+      requireUser: false,
+      fields: {
+        appointment_id: {type: String, required: true},
+      },
+    },
+  })
+  async cancelAppointment(req: Parse.Cloud.FunctionRequest) {
+    try {
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
+      if (!user) throw {codeStatus: 103, message: 'User context is missing'};
+
+      const {appointment_id} = req.params;
+
+      const appointment = await new Parse.Query(Appointment)
+        .include(['user_id'])
+        .get(appointment_id, {useMasterKey: true});
+
+      if (!appointment)
+        throw {codeStatus: 104, message: 'Appointment not found'};
+
+      const requester = appointment.get('user_id');
+      if (requester?.id !== user.id) {
+        throw {
+          codeStatus: 102,
+          message: 'Unauthorized: You can only cancel your own appointments',
+        };
+      }
+
+      const status = appointment.get('status');
+      if (status !== 'pending' && status !== 'pending_provider_approval') {
+        throw {
+          codeStatus: 105,
+          message:
+            'Cannot cancel appointment because it is already processed or completed',
+        };
+      }
+
+      appointment.set('status', 'cancelled');
+      appointment.set('updated_at', new Date());
+      await appointment.save(null, {useMasterKey: true});
+
+      return {message: 'Appointment cancelled successfully'};
+    } catch (error: any) {
+      console.error('Error in cancelAppointment:', error);
+      throw {
+        codeStatus: error.codeStatus || 1013,
+        message: error.message || 'Failed to cancel appointment',
       };
     }
   }

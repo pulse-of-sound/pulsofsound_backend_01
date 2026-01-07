@@ -7,7 +7,7 @@ class WalletTransactionFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         from_wallet_id: {type: String, required: true},
         to_wallet_id: {type: String, required: true},
@@ -19,7 +19,18 @@ class WalletTransactionFunctions {
   })
   async createWalletTransaction(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -93,9 +104,9 @@ class WalletTransactionFunctions {
     }
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         wallet_id: {type: String, required: true},
         type: {type: String, required: false},
@@ -105,7 +116,18 @@ class WalletTransactionFunctions {
   })
   async getWalletTransactions(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -166,9 +188,9 @@ class WalletTransactionFunctions {
     }
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         appointment_id: {type: String, required: true},
       },
@@ -176,7 +198,18 @@ class WalletTransactionFunctions {
   })
   async getTransactionsByAppointment(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -219,7 +252,7 @@ class WalletTransactionFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         transaction_id: {type: String, required: true},
         reason: {type: String, required: false},
@@ -228,7 +261,18 @@ class WalletTransactionFunctions {
   })
   async reverseTransaction(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -312,9 +356,9 @@ class WalletTransactionFunctions {
     }
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         transaction_id: {type: String, required: true},
       },
@@ -322,7 +366,18 @@ class WalletTransactionFunctions {
   })
   async getTransactionById(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }

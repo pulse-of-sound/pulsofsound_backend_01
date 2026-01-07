@@ -1,9 +1,7 @@
-// agreementService.ts
 import OpenAI from 'openai';
 
 const client = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 
-// ---------- Prompt templates (edit here, usage unchanged) ----------
 const SYSTEM_PROMPT = `
 You are an agreement JSON generator/updater. You MUST output ONLY valid JSON with this shape:
 {
@@ -60,7 +58,6 @@ OUTPUT:
 - meta.missing_info for any change you could not apply due to missing specifics
 `.trim();
 
-// ---------- Types ----------
 type Role = 'Client' | 'Broker' | 'Seller' | 'Buyer' | string;
 
 export interface Conversation {
@@ -83,7 +80,6 @@ export interface AgreementResponse {
   };
 }
 
-// Discriminated union (same as before)
 export type AgreementGenerateRequest = {
   mode: 'generate';
   conversations: Conversation[];
@@ -99,7 +95,6 @@ export type AgreementRequest =
   | AgreementGenerateRequest
   | AgreementUpdateRequest;
 
-// ---------- Core function (same signature & usage) ----------
 export async function generateOrUpdateAgreement(
   payload: AgreementRequest
 ): Promise<AgreementResponse> {
@@ -124,23 +119,7 @@ export async function generateOrUpdateAgreement(
 
   const parsed = JSON.parse(content) as AgreementResponse;
   parsed.meta = parsed.meta || ({} as any);
-  parsed.meta.source = payload.mode; // enforce correct source
+  parsed.meta.source = payload.mode;
 
   return parsed;
 }
-
-// GENERATE: from chat only
-// await generateOrUpdateAgreement({
-//   mode: "generate",
-//   conversations: [
-//     { username: "client1", role: "Client", conversation: "Offer 200k, 30-day closing." },
-//     { username: "broker1", role: "Broker", conversation: "Seller accepts 200k, 30 days ok." }
-//   ]
-// });
-
-// // UPDATE: from updatePrompt only (no conversations)
-// await generateOrUpdateAgreement({
-//   mode: "update",
-//   currentAgreement: { terms: { price: 200000, currency: "USD", closing_days: 30 } },
-//   updatePrompt: "Change closing_days from 30 to 45; keep price and currency unchanged."
-// });

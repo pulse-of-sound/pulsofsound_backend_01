@@ -1,4 +1,4 @@
-import { CloudFunctionMetadata } from "../types/cloud";
+import {CloudFunctionMetadata} from '../types/cloud';
 
 export class CloudFunctionRegistry {
   private static functions: Map<string, CloudFunctionMetadata> = new Map();

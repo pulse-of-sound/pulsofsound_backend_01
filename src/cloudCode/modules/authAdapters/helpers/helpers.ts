@@ -1,5 +1,5 @@
 export function isMobileNumberValid(mobileNumber: string): boolean {
-  const e164Regex = /^\+[1-9]\d{9,14}$/; // starts with +, followed by 10–15 digits (excluding +)
+  const e164Regex = /^\+[1-9]\d{9,14}$/;
   return (
     !!mobileNumber &&
     e164Regex.test(mobileNumber) &&

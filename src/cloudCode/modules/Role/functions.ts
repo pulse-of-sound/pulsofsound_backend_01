@@ -12,11 +12,11 @@ class RoleFunctions {
     },
   })
   async createRole(req: Parse.Cloud.FunctionRequest) {
-    const { name } = req.params;
+    const {name} = req.params;
 
     const user = req.user;
     if (!user || !(user instanceof Parse.User)) {
-      throw new Error("Invalid user context for ACL");
+      throw new Error('Invalid user context for ACL');
     }
 
     const role = new Role();
@@ -28,7 +28,7 @@ class RoleFunctions {
     acl.setWriteAccess(user.id, true);
     role.setACL(acl);
 
-    await role.save(null, { useMasterKey: true });
+    await role.save(null, {useMasterKey: true});
     return `Role '${name}' created successfully`;
   }
 }

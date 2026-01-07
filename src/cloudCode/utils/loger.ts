@@ -19,7 +19,7 @@ export const LoggerAdapter: winston.Logger = winston.createLogger({
       dirname: './logs',
       zippedArchive: true,
       utc: true,
-      maxSize: '5000m', // Maximum size before rotation, adjust as needed
+      maxSize: '5000m',
       frequency: '2m',
     }),
   ],

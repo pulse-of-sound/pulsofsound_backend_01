@@ -10,7 +10,8 @@
     "compile": "tsc",
     "start": "rimraf build/src/cloudCode && rimraf build/src/app.js  && tsc && node --max-old-space-size=1024 ./build/src/app.js",
     "deploy": "node deploy.js",
-    "db": "parse-dashboard --config dashboard.json"
+    "db": "parse-dashboard --config dashboard.json",
+    "rename-training-images": "ts-node Tools/renameTrainingImagesToMatchDB.ts"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.0",

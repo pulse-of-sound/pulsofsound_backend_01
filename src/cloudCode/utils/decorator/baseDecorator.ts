@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import {classLevelPermissions, classNames} from '../schema/schemaTypes';
 import {ClassNameType} from '../schema/classNameType';
 
-// Define allowed field types
 export type AllowedFieldType =
   | {type: 'String'; required?: boolean}
   | {type: 'Number'; required?: boolean}
@@ -17,7 +16,6 @@ export type AllowedFieldType =
   | {type: 'Pointer'; targetClass: string; required: boolean}
   | {type: 'Relation'; targetClass: string; required: boolean};
 
-// Valid field types
 const VALID_TYPES = new Set([
   'String',
   'Number',
@@ -38,7 +36,6 @@ export function ParseField(
   required: boolean = false,
   targetClass?: ClassNameType
 ) {
-  // Validate type
   if (!VALID_TYPES.has(type)) {
     throw new Error(
       `Invalid field type: ${type}. Must be one of ${Array.from(
@@ -47,7 +44,6 @@ export function ParseField(
     );
   }
 
-  // Validate targetClass for Pointer and Relation
   if ((type === 'Pointer' || type === 'Relation') && !targetClass) {
     throw new Error(`Field of type '${type}' must have a targetClass.`);
   }
@@ -55,18 +51,15 @@ export function ParseField(
   return function (target: Object, propertyKey: string | symbol) {
     const className = target.constructor.name;
 
-    // Ensure metadata storage
     const existingFields =
       Reflect.getMetadata('parse:fields', target.constructor) || {};
 
-    // Store field metadata
     existingFields[propertyKey as string] = targetClass
       ? {type, targetClass, required}
       : {type, required};
 
     Reflect.defineMetadata('parse:fields', existingFields, target.constructor);
 
-    // Define getter and setter for Parse.Object
     Object.defineProperty(target, propertyKey, {
       get(this: Parse.Object) {
         return this.get(propertyKey as string);
@@ -80,7 +73,6 @@ export function ParseField(
   };
 }
 
-//===========ParseClass decorator to accept CLP when define class=========
 export function ParseClass(
   className: any,
   options: {
@@ -121,24 +113,12 @@ export function getSchemaDefinition<T>(
   const name = Reflect.getMetadata('parse:className', target);
   const fields = Reflect.getMetadata('parse:fields', target) || {};
   const customCLP = Reflect.getMetadata('parse:clp', target);
-  //const isPublic = Reflect.getMetadata('parse:isPublic', target) || false;
 
   let classLevelPermissions: any;
 
   if (customCLP) {
-    // Use custom CLP from decorator
     classLevelPermissions = {...customCLP};
-
-    // Add public access for read operations if isPublic is true
-    // if (isPublic) {
-    //   ['find', 'get', 'count'].forEach(operation => {
-    //     if (classLevelPermissions[operation]) {
-    //       classLevelPermissions[operation]['*'] = true;
-    //     }
-    //   });
-    // }
   } else {
-    // Fallback to default CLP with role-based permissions
     const Get = `role:${name}-role-r`;
     const Create = `role:${name}-role-c`;
     const Delete = `role:${name}-role-d`;
@@ -163,7 +143,6 @@ export function getSchemaDefinition<T>(
     };
   }
 
-  // Ensure all CLP operations have at least an empty object
   const operations = ['find', 'get', 'create', 'update', 'delete', 'count'];
   operations.forEach(op => {
     if (!classLevelPermissions[op]) {
@@ -177,4 +156,3 @@ export function getSchemaDefinition<T>(
     classLevelPermissions,
   };
 }
-//=============

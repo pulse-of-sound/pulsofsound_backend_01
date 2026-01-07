@@ -32,4 +32,10 @@ export default class UserStageStatus extends BaseModel {
 
   @ParseField('Number', false)
   attempts?: number;
+
+  @ParseField('Number', false)
+  current_stage?: number;
+
+  @ParseField('Date', false)
+  last_play_date?: Date;
 }

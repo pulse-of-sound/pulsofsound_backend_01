@@ -1,5 +1,5 @@
 import {BaseModel} from '../utils/BaseModel';
-import { ParseClass, ParseField } from '../utils/decorator/baseDecorator';
+import {ParseClass, ParseField} from '../utils/decorator/baseDecorator';
 
 @ParseClass('File', {
   clp: {
@@ -39,7 +39,6 @@ export default class File extends BaseModel {
       name: nameWithoutHash,
       url: obj.file?.url(),
       type: obj.file?.name().split('.').pop(),
-      // mimeType: obj.mimeType,
       size: obj?.fileSize ?? 0,
     };
   }

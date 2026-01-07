@@ -1,10 +1,10 @@
 import {ClassNameType} from './classNameType';
 
 type CLPParamsOption =
-  | {} // Master key only
-  | '*' // Everyone
-  | {requiresAuthentication: boolean} // Authenticated users only
-  | {[key: string]: boolean}; // Specific role access with boolean value
+  | {}
+  | '*'
+  | {requiresAuthentication: boolean}
+  | {[key: string]: boolean};
 
 export type AllowedFieldType =
   | {type: 'String'; required?: boolean}

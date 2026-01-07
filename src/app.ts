@@ -7,11 +7,9 @@ const ParseServer = require('parse-server').ParseServer;
 const app = express();
 const server = require('http').createServer(app);
 
-// Pre-load all models to populate classNames array
 import {join} from 'path';
 import {importFiles} from './cloudCode/utils/dynamicImport';
 
-// Import Models before schema initialization
 console.log('|||||||||||| Pre-loading Models for Schema ||||||||||||');
 const mainModelsPath = join(__dirname, 'cloudCode/models');
 importFiles(mainModelsPath);
@@ -21,7 +19,6 @@ import EmailAuth = require('./cloudCode/modules/authAdapters/emailAuth');
 
 import path = require('path');
 
-// Now import other modules after models are loaded
 import {CloudFunctionRegistry} from './cloudCode/utils/Registry/registry';
 import {LoggerAdapter} from './cloudCode/utils/loger';
 import FileAdapter from './cloudCode/utils/fileAdapter';
@@ -39,16 +36,7 @@ const parseConfig = {
   },
   enableInsecureAuthAdapters: false,
   auth: {
-    // google: {enabled: true, clientId: process.env.googleClinetId},
-    // apple: {
-    //   enabled: true,
-    //   clientId: process.env.APPLE_CLIENT_ID,
-    //   teamId: process.env.APPLE_TEAM_ID,
-    //   keyId: process.env.APPLE_KEY_ID,
-    // },
     mobileAuth: {enabled: true, module: MobileAuth},
-    // emailAuth: {enabled: true, module: EmailAuth},
-    // anonymous: {enabled: true},
   },
   databaseURI: process.env.databaseURI,
   appName: process.env.appName,
@@ -62,8 +50,6 @@ const parseConfig = {
   publicServerURL: process.env.publicServerURL,
   mountPath: process.env.mountPath,
   loggerAdapter: LoggerAdapter,
-  // logLevel: 'error',
-  // verbose: false,
   filesAdapter: new FileAdapter({filesDir: path.resolve('./', 'files')}),
   fileUpload: {
     enableForAnonymousUser: true,
@@ -104,7 +90,6 @@ const parseConfig = {
 
 export const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  // service: 'google',
   auth: {
     user: process.env.SENDERMAIL,
     pass: process.env.MAILPASSWORD,
@@ -134,12 +119,11 @@ function validateFunctionRoutes(
     return res.status(405).json({message: 'Method not allowed'});
   }
 
-  req.method = 'POST'; // Convert method to POST for Parse Server
+  req.method = 'POST';
 
   return next();
 }
 
-// Middleware for extracting the master key from the request body
 function extractMasterKey(
   req: any,
   res: Response,
@@ -155,30 +139,6 @@ function extractMasterKey(
     throw res.status(400).json({message: `Error parsing JSON body`});
   }
 }
-
-// Middleware to restrict access to specific routes
-// function restrictRoutes(req: any, res: Response, next: NextFunction) {
-//   const allowedRoutes = ['/functions', '/health', '/serverInfo', '/files'];
-
-//   if (req['x-master-key'] === process.env.masterKey) {
-//     return next();
-//   }
-//   // if (
-//   //   !req['x-master-key'] &&
-//   //   req.path.startsWith('/files') &&
-//   //   req.method !== 'GET'
-//   // ) {
-//   //   throw res.status(403).json({message: `Not allowed`});
-//   // }
-
-//   if (!allowedRoutes.some(route => req.path.startsWith(route))) {
-//     console.log(allowedRoutes);
-//     console.log(req.path);
-//     throw res.status(403).json({message: `Route not allowed`});
-//   }
-
-//   next();
-// }
 function restrictRoutes(req: any, res: Response, next: NextFunction) {
   const allowedRoutes = [
     '/functions',
@@ -201,7 +161,6 @@ function restrictRoutes(req: any, res: Response, next: NextFunction) {
   next();
 }
 
-// Conditional middleware to apply JSON parsing only to certain routes
 function conditionalJsonMiddleware(
   req: Request,
   res: Response,
@@ -209,6 +168,12 @@ function conditionalJsonMiddleware(
 ) {
   if (req.path.startsWith(`${process.env.mountPath}/files`)) {
     console.log('Skipping JSON middleware for /files route');
+    return next();
+  }
+
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    console.log('Skipping JSON middleware for multipart request');
     return next();
   }
 
@@ -237,45 +202,45 @@ function removeResultMiddleware(req: any, res: any, next: any) {
     };
   }
 
-  // Proceed to the next middleware
   next();
 }
 
-// Main application entry point
 async function main() {
   const parseServer = await initializeParseServer();
   Parse.masterKey = process.env.masterKey;
 
   app.use(removeResultMiddleware);
-  // Middleware setup
   app.use(cors());
   app.use(process.env.mountPath + '/functions', validateFunctionRoutes as any);
   app.use(conditionalJsonMiddleware);
   app.use(`${process.env.mountPath}`, restrictRoutes);
-  // Mount Parse Server
   app.use(process.env.mountPath as string, parseServer.app);
   CloudFunctionRegistry.initialize();
-  // // Start server
+
+  const registeredFunctions = CloudFunctionRegistry.getFunctions();
+  console.log('\n ============ Registered Cloud Functions ============');
+  registeredFunctions.forEach(fn => {
+    console.log(`   ${fn.name} [${fn.config.methods.join(', ')}]`);
+  });
+  console.log(` Total: ${registeredFunctions.length} functions registered\n`);
+
   server.listen(1337, () => {
     seedAll();
     console.log('The Server is up and running on port 1337.');
   });
 
-  // Start Live Query Server
   try {
     await ParseServer.createLiveQueryServer(server);
-    console.log('✅ Live Query Server started successfully');
+    console.log(' Live Query Server started successfully');
 
-    // Add WebSocket connection logging
     server.on('upgrade', (request: any, socket: any, head: any) => {
-      console.log('🔌 WebSocket upgrade request:', request.url);
+      console.log(' WebSocket upgrade request:', request.url);
     });
   } catch (error) {
-    console.error('❌ Error starting Live Query Server:', error);
+    console.error(' Error starting Live Query Server:', error);
   }
 }
 
-// Initialize application
 main()
   .then(() => {
     console.log('--- Server Initialized ---');

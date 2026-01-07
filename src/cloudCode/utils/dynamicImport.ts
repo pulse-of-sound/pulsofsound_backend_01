@@ -1,5 +1,5 @@
-import {readdirSync, statSync} from 'fs';
-import {extname, join} from 'path';
+import { readdirSync, statSync } from 'fs';
+import { extname, join } from 'path';
 
 const isDirectory = (path: string) => statSync(path).isDirectory();
 

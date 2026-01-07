@@ -50,7 +50,7 @@ class LevelFunctions {
   }
 
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['GET', 'POST'],
     validation: {
       requireUser: false,
       fields: {},
@@ -107,7 +107,7 @@ class LevelFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         level_id: {required: true, type: String},
       },
@@ -115,27 +115,6 @@ class LevelFunctions {
   })
   async deleteLevel(req: Parse.Cloud.FunctionRequest) {
     const {level_id} = req.params;
-    const user = req.user;
-
-    if (!user) {
-      throw {
-        codeStatus: 401,
-        message: 'Unauthorized: user not found',
-      };
-    }
-
-    const roleQuery = new Parse.Query(Parse.Role);
-    roleQuery.equalTo('name', 'Admin');
-    roleQuery.equalTo('users', user);
-
-    const isAdmin = await roleQuery.first({useMasterKey: true});
-
-    if (!isAdmin) {
-      throw {
-        codeStatus: 403,
-        message: 'Access denied: user is not in Admin role',
-      };
-    }
 
     const level = await new Parse.Query(Level)
       .equalTo('objectId', level_id)

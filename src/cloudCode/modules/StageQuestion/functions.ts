@@ -6,7 +6,7 @@ class StageQuestionFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         level_game_id: {required: true, type: String},
         questions: {required: true, type: Array},
@@ -16,27 +16,6 @@ class StageQuestionFunctions {
   async addQuestionsToStage(req: Parse.Cloud.FunctionRequest) {
     try {
       const {level_game_id, questions} = req.params;
-      const user = req.user;
-
-      if (!user) {
-        throw {
-          codeStatus: 401,
-          message: 'Unauthorized: user not found',
-        };
-      }
-
-      const roleQuery = new Parse.Query(Parse.Role);
-      roleQuery.equalTo('name', 'Admin');
-      roleQuery.equalTo('users', user);
-
-      const isAdmin = await roleQuery.first({useMasterKey: true});
-
-      if (!isAdmin) {
-        throw {
-          codeStatus: 403,
-          message: 'Access denied: user is not in Admin role',
-        };
-      }
 
       const stagePointer = await new Parse.Query(LevelGame)
         .equalTo('objectId', level_game_id)
@@ -87,7 +66,7 @@ class StageQuestionFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         question_ids: {required: true, type: Array},
       },
@@ -96,27 +75,6 @@ class StageQuestionFunctions {
   async deleteStageQuestionsByIds(req: Parse.Cloud.FunctionRequest) {
     try {
       const {question_ids} = req.params;
-      const user = req.user;
-
-      if (!user) {
-        throw {
-          codeStatus: 401,
-          message: 'Unauthorized: user not found',
-        };
-      }
-
-      const roleQuery = new Parse.Query(Parse.Role);
-      roleQuery.equalTo('name', 'Admin');
-      roleQuery.equalTo('users', user);
-
-      const isAdmin = await roleQuery.first({useMasterKey: true});
-
-      if (!isAdmin) {
-        throw {
-          codeStatus: 403,
-          message: 'Access denied: user is not in Admin role',
-        };
-      }
 
       const query = new Parse.Query(StageQuestion);
       query.containedIn('objectId', question_ids);
@@ -180,20 +138,14 @@ class StageQuestionFunctions {
       const results = await query.find({useMasterKey: true});
 
       const questions = results.map(q => {
-        const base = {
+        return {
           objectId: q.id,
           question_type: q.get('question_type'),
           instruction: q.get('instruction'),
           images: q.get('images'),
           options: q.get('options') || null,
+          correct_answer: q.get('correct_answer') || null,
         };
-        if (isAdmin) {
-          return {
-            ...base,
-            correct_answer: q.get('correct_answer') || null,
-          };
-        }
-        return base;
       });
 
       return {

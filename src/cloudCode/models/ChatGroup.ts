@@ -15,11 +15,17 @@ export default class ChatGroup extends BaseModel {
     super('ChatGroup');
   }
 
-  @ParseField('Pointer', true, 'Appointment')
-  appointment_id!: Parse.Object;
+  @ParseField('Pointer', false, 'Appointment')
+  appointment_id?: Parse.Object;
 
   @ParseField('Pointer', false, 'ChildProfile')
   child_id?: Parse.Object;
+
+  @ParseField('String', true)
+  chat_type!: string;
+
+  @ParseField('String', false)
+  community_name?: string;
 
   @ParseField('String', false)
   last_message?: string;

@@ -23,9 +23,7 @@ export class BaseModel extends Parse.Object {
       if (targetClass === 'IMG') continue;
       if (targetClass === 'File') continue;
 
-      // ✅ Pointer field
       if (fieldType === 'Pointer') {
-        // Handle null and empty objects for Pointer fields
         if (
           value === null ||
           (value &&
@@ -40,13 +38,11 @@ export class BaseModel extends Parse.Object {
         const pointerObj = new PointerConstructor();
 
         if (value && value.id) pointerObj.id = value.id;
-        //pointerObj.set(value); // set even if it has id (for update)
 
         obj.set(field, pointerObj);
         continue;
       }
 
-      // ✅ Array of Pointers
       if (fieldType === 'Array' && Array.isArray(value) && targetClass) {
         const PointerConstructor = Parse.Object.extend(targetClass);
         const pointerArray = value.map((item: any) => {
@@ -58,7 +54,6 @@ export class BaseModel extends Parse.Object {
         continue;
       }
 
-      // ✅ Embedded object
       if (fieldType === 'Object') {
         obj.set(field, value);
         continue;
@@ -72,7 +67,6 @@ export class BaseModel extends Parse.Object {
         obj.set(field, new Parse.GeoPoint(value));
         continue;
       }
-      // ✅ Scalar
       obj.set(field, value);
     }
 

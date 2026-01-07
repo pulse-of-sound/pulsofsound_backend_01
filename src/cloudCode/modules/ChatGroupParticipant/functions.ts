@@ -1,11 +1,24 @@
 import ChatGroupParticipant from '../../models/ChatGroupParticipant';
 import {CloudFunction} from '../../utils/Registry/decorators';
 
+async function _getUser(req: Parse.Cloud.FunctionRequest) {
+  if (req.user) return req.user;
+
+  const sessionToken = (req as any).headers?.['x-parse-session-token'];
+  if (!sessionToken) return null;
+
+  const sessionQuery = new Parse.Query(Parse.Session);
+  sessionQuery.equalTo('sessionToken', sessionToken);
+  sessionQuery.include('user');
+  const session = await sessionQuery.first({useMasterKey: true});
+  return session?.get('user') || null;
+}
+
 class ChatGroupParticipantFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         chat_group_id: {type: String, required: true},
         participant_id: {type: String, required: true},
@@ -14,9 +27,7 @@ class ChatGroupParticipantFunctions {
   })
   async removeParticipantFromGroup(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = await new Parse.Query('_User')
-        .include('role')
-        .get(req.user!.id, {useMasterKey: true});
+      const user = await _getUser(req);
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -80,7 +91,7 @@ class ChatGroupParticipantFunctions {
   })
   async muteParticipant(req: Parse.Cloud.FunctionRequest) {
     try {
-      const rawUser = req.user;
+      const rawUser = await _getUser(req);
       if (!rawUser) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -155,7 +166,7 @@ class ChatGroupParticipantFunctions {
   })
   async unmuteParticipant(req: Parse.Cloud.FunctionRequest) {
     try {
-      const rawUser = req.user;
+      const rawUser = await _getUser(req);
       if (!rawUser) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -213,9 +224,9 @@ class ChatGroupParticipantFunctions {
     }
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         chat_group_id: {type: String, required: true},
       },
@@ -223,7 +234,7 @@ class ChatGroupParticipantFunctions {
   })
   async getParticipantsInGroup(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const user = await _getUser(req);
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -231,13 +242,16 @@ class ChatGroupParticipantFunctions {
       const {chat_group_id} = req.params;
 
       const query = new Parse.Query(ChatGroupParticipant);
-      query.equalTo('chat_group_id', new Parse.Object('ChatGroup', {id: chat_group_id}));
+      query.equalTo(
+        'chat_group_id',
+        new Parse.Object('ChatGroup', {id: chat_group_id})
+      );
       query.include(['user_id', 'user_id.role']);
       query.limit(1000);
 
       const participants = await query.find({useMasterKey: true});
 
-      const formatted = participants.map((p) => {
+      const formatted = participants.map(p => {
         const u = p.get('user_id');
         const roleObject = u?.get('role');
         return {

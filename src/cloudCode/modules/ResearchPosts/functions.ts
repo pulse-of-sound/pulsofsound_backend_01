@@ -3,11 +3,24 @@ import ResearchPosts from '../../models/ResearchPosts';
 import ResearchCategories from '../../models/ResearchCategories';
 import PostCategories from '../../models/PostCategories';
 
+async function _getUser(req: Parse.Cloud.FunctionRequest) {
+  if (req.user) return req.user;
+
+  const sessionToken = (req as any).headers?.['x-parse-session-token'];
+  if (!sessionToken) return null;
+
+  const sessionQuery = new Parse.Query(Parse.Session);
+  sessionQuery.equalTo('sessionToken', sessionToken);
+  sessionQuery.include('user');
+  const session = await sessionQuery.first({useMasterKey: true});
+  return session?.get('user') || null;
+}
+
 class ResearchPostsFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         title: {type: String, required: true},
         body: {type: String, required: true},
@@ -18,8 +31,8 @@ class ResearchPostsFunctions {
     },
   })
   async submitResearchPost(req: Parse.Cloud.FunctionRequest) {
-    const user = req.user;
-    if (!user) throw new Error('User is not logged in');
+    const user = await _getUser(req);
+    if (!user) throw {code: 141, message: 'User is not logged in'};
 
     const role = await user.get('role')?.fetch({useMasterKey: true});
     const allowedRoles = ['Doctor', 'Specialist'];
@@ -70,14 +83,14 @@ class ResearchPostsFunctions {
     };
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
     },
   })
   async getPendingResearchPosts(req: Parse.Cloud.FunctionRequest) {
-    const user = req.user;
-    if (!user) throw new Error('User is not logged in');
+    const user = await _getUser(req);
+    if (!user) throw {code: 141, message: 'User is not logged in'};
 
     const role = await user.get('role')?.fetch({useMasterKey: true});
     if (!role || role.get('name') !== 'Admin') {
@@ -108,7 +121,7 @@ class ResearchPostsFunctions {
         created_at: post.get('created_at'),
         author: {
           id: post.get('author_id')?.id,
-          name: post.get('author_id')?.get('full_name') || 'Unknown',
+          name: post.get('author_id')?.get('fullName') || 'Unknown',
         },
         category: postCategory?.get('category_id')?.get('name') || 'undefined',
         has_document: !!post.get('document'),
@@ -121,17 +134,17 @@ class ResearchPostsFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         post_id: {type: String, required: true},
-        action: {type: String, required: true}, // "publish" أو "reject"
+        action: {type: String, required: true},
         rejection_reason: {type: String, required: false},
       },
     },
   })
   async approveOrRejectPost(req: Parse.Cloud.FunctionRequest) {
-    const user = req.user;
-    if (!user) throw new Error('User is not logged in');
+    const user = await _getUser(req);
+    if (!user) throw {code: 141, message: 'User is not logged in'};
 
     const role = await user.get('role')?.fetch({useMasterKey: true});
     if (!role || role.get('name') !== 'Admin') {
@@ -167,7 +180,7 @@ class ResearchPostsFunctions {
     };
   }
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
       requireUser: false,
     },
@@ -198,7 +211,7 @@ class ResearchPostsFunctions {
         author: {
           id: post.get('author_id')?.id,
           name:
-            post.get('author_id')?.get('full_name') ||
+            post.get('author_id')?.get('fullName') ||
             post.get('author_id')?.get('username') ||
             'Unknown',
         },
@@ -210,25 +223,24 @@ class ResearchPostsFunctions {
     return results;
   }
 
-
   @CloudFunction({
-    methods: ['GET'],
+    methods: ['POST'],
     validation: {
       requireUser: false,
       fields: {
-        query: { type: String, required: true },
+        query: {type: String, required: true},
       },
     },
   })
   async searchResearchPosts(req: Parse.Cloud.FunctionRequest) {
-    const { query } = req.params;
+    const {query} = req.params;
 
     const postQuery = new Parse.Query(ResearchPosts);
     postQuery.equalTo('status', 'published');
-    postQuery.matches('keywords', new RegExp(query, 'i')); // بحث غير حساس لحالة الأحرف
+    postQuery.matches('keywords', new RegExp(query, 'i'));
     postQuery.include('author_id');
     postQuery.descending('created_at');
-    const posts = await postQuery.find({ useMasterKey: true });
+    const posts = await postQuery.find({useMasterKey: true});
 
     const results = [];
 
@@ -238,7 +250,7 @@ class ResearchPostsFunctions {
       const postCategoryQuery = new Parse.Query(PostCategories);
       postCategoryQuery.equalTo('post_id', post);
       postCategoryQuery.include('category_id');
-      const postCategory = await postCategoryQuery.first({ useMasterKey: true });
+      const postCategory = await postCategoryQuery.first({useMasterKey: true});
 
       results.push({
         post_id: postId,
@@ -248,7 +260,10 @@ class ResearchPostsFunctions {
         created_at: post.get('created_at'),
         author: {
           id: post.get('author_id')?.id,
-          name: post.get('author_id')?.get('full_name') || post.get('author_id')?.get('username') || 'Unknown',
+          name:
+            post.get('author_id')?.get('fullName') ||
+            post.get('author_id')?.get('username') ||
+            'Unknown',
         },
         category: postCategory?.get('category_id')?.get('name') || null,
         document_url: post.get('document')?.url() || null,
@@ -257,6 +272,50 @@ class ResearchPostsFunctions {
 
     return results;
   }
-  
+
+  @CloudFunction({
+    methods: ['POST'],
+    validation: {
+      requireUser: false,
+    },
+  })
+  async getMyResearchPosts(req: Parse.Cloud.FunctionRequest) {
+    const user = await _getUser(req);
+    if (!user) throw {code: 141, message: 'User is not logged in'};
+
+    const query = new Parse.Query(ResearchPosts);
+    query.equalTo('author_id', {
+      __type: 'Pointer',
+      className: '_User',
+      objectId: user.id,
+    });
+    query.descending('created_at');
+    const posts = await query.find({useMasterKey: true});
+
+    const results = [];
+
+    for (const post of posts) {
+      const postId = post.id;
+
+      const postCategoryQuery = new Parse.Query(PostCategories);
+      postCategoryQuery.equalTo('post_id', post);
+      postCategoryQuery.include('category_id');
+      const postCategory = await postCategoryQuery.first({useMasterKey: true});
+
+      results.push({
+        post_id: postId,
+        title: post.get('title'),
+        body: post.get('body'),
+        status: post.get('status'),
+        keywords: post.get('keywords'),
+        created_at: post.get('created_at'),
+        category: postCategory?.get('category_id')?.get('name') || 'undefined',
+        document_url: post.get('document')?.url() || null,
+        rejection_reason: post.get('rejection_reason') || null,
+      });
+    }
+
+    return results;
+  }
 }
 export default new ResearchPostsFunctions();

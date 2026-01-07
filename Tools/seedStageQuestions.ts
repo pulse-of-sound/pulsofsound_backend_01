@@ -57,8 +57,8 @@ async function seedStageQuestions() {
         question_type: 'choose',
         instruction: 'اختر الصورة التي تمثل ولدًا',
         images: [boy, girl],
-        correct_answer: { index: 0 },
-        options: { labels: ['ولد', 'بنت'] },
+        correct_answer: {index: 0},
+        options: {labels: ['ولد', 'بنت']},
       },
       {
         question_type: 'match',
@@ -66,8 +66,8 @@ async function seedStageQuestions() {
         images: [boy, girl, boy1, girl1],
         correct_answer: {
           pairs: [
-            { left: 0, right: 2 },
-            { left: 1, right: 3 },
+            {left: 0, right: 2},
+            {left: 1, right: 3},
           ],
         },
       },
@@ -102,20 +102,20 @@ async function seedStageQuestions() {
         correct_answer: q.correct_answer || null,
         options: q.options || null,
         order: index,
-        created_at: { __type: 'Date', iso: new Date().toISOString() },
-        updated_at: { __type: 'Date', iso: new Date().toISOString() },
+        created_at: {__type: 'Date', iso: new Date().toISOString()},
+        updated_at: {__type: 'Date', iso: new Date().toISOString()},
       };
 
       await saveStageQuestion(payload);
-      console.log(`✅ Question ${index + 1} of type ${q.question_type} saved`);
+      console.log(`Question ${index + 1} of type ${q.question_type} saved`);
     }
 
-    console.log('🎉 All stage questions seeded successfully!');
+    console.log(' All stage questions seeded successfully!');
   } catch (error: any) {
-    console.error('❌ Error:', error.response?.data || error.message);
+    console.error(' Error:', error.response?.data || error.message);
   }
 }
 
 seedStageQuestions().catch(err => {
-  console.error('❌ Fatal Error:', err);
+  console.error('Fatal Error:', err);
 });

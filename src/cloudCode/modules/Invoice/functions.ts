@@ -7,7 +7,7 @@ class InvoiceFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         appointment_id: {type: String, required: true},
       },
@@ -15,7 +15,18 @@ class InvoiceFunctions {
   })
   async createInvoiceForAppointment(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
@@ -60,7 +71,7 @@ class InvoiceFunctions {
   @CloudFunction({
     methods: ['POST'],
     validation: {
-      requireUser: true,
+      requireUser: false,
       fields: {
         invoice_id: {type: String, required: true},
       },
@@ -68,7 +79,18 @@ class InvoiceFunctions {
   })
   async confirmInvoicePayment(req: Parse.Cloud.FunctionRequest) {
     try {
-      const user = req.user;
+      const sessionToken = (req as any).headers?.['x-parse-session-token'];
+      if (!sessionToken) {
+        throw {codeStatus: 101, message: 'Session token is required'};
+      }
+      const sessionQuery = new Parse.Query(Parse.Session);
+      sessionQuery.equalTo('sessionToken', sessionToken);
+      sessionQuery.include('user');
+      const session = await sessionQuery.first({useMasterKey: true});
+      if (!session) {
+        throw {codeStatus: 101, message: 'Invalid session token'};
+      }
+      const user = session.get('user');
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }

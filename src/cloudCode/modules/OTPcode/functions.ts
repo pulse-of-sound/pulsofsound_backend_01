@@ -160,49 +160,4 @@ class OTP_ {
       };
     }
   }
-  // @CloudFunction({
-  //   methods: ['POST'],
-  //   validation: {
-  //     requireUser: false,
-  //     fields: {
-  //       mobileNumber: {required: true, type: String},
-  //     },
-  //   },
-  // })
-  // async loginAfterOTP(req: Parse.Cloud.FunctionRequest) {
-  //   const {mobileNumber} = req.params;
-  //   const fixedPassword = 'otp_temp';
-
-  //   const userQuery = new Parse.Query(Parse.User);
-  //   userQuery.equalTo('mobileNumber', mobileNumber);
-  //   const existingUser = await userQuery.first({useMasterKey: true});
-
-  //   if (existingUser) {
-  //     // حذف المستخدم القديم إذا ما عنده كلمة مرور
-  //     await existingUser.destroy({useMasterKey: true});
-  //   }
-
-  //   // إنشاء مستخدم جديد بكلمة مرور ثابتة
-  //   const newUser = new Parse.User();
-  //   newUser.set('username', `user_${Date.now()}`);
-  //   newUser.set('password', fixedPassword);
-  //   newUser.set('mobileNumber', mobileNumber);
-  //   await newUser.signUp(null, {useMasterKey: true});
-
-  //   // تسجيل دخول للحصول على sessionToken
-  //   const loggedInUser = await Parse.User.logIn(
-  //     newUser.get('username'),
-  //     fixedPassword
-  //   );
-  //   const sessionToken = loggedInUser.getSessionToken();
-
-  //   return {
-  //     sessionToken,
-  //     user: {
-  //       id: loggedInUser.id,
-  //       mobileNumber: loggedInUser.get('mobileNumber'),
-  //       username: loggedInUser.get('username'),
-  //     },
-  //   };
-  // }
 }
