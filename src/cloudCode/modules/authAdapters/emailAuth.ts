@@ -1,6 +1,7 @@
 import OTPcode from '../../models/OTPcode';
 import {isEmailFormat, isOtpValid} from './helpers/helpers';
 
+//مدة صلاحية ال otp
 const OTP_EXPIRY_MS = parseInt(process.env.OTP_EXPIRY_MIN!) * 60 * 1000;
 
 async function validateAuthData(authData: {id: string; OTP: string}) {
@@ -10,7 +11,7 @@ async function validateAuthData(authData: {id: string; OTP: string}) {
   if (!isEmailFormat(id)) {
     throw 'Invalid or missing email.';
   }
-
+//طوله 6
   if (!isOtpValid(otp)) {
     throw 'Invalid or missing OTP.';
   }
@@ -33,7 +34,7 @@ async function validateAuthData(authData: {id: string; OTP: string}) {
       message: 'Invalid Code.',
     };
   }
-
+//التحقق من الصلاحية 
   const now = Date.now();
   const createdAt = otpRecord.createdAt!.getTime();
   const isExpired = now - createdAt >= OTP_EXPIRY_MS;

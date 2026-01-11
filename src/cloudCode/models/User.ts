@@ -107,37 +107,38 @@ export default class User extends Parse.User {
 
     return flattenedObject;
   }
-
+//يتم إنشاء مستخدم جديد
   static async createUserRecord(userParams: any) {
     const user = new User();
-
+//إذا مرر id باخدو احسن ما أنشأ واحد جديد
     if (userParams?.id) {
       user.id = userParams.id;
     }
-
+//اذا ما مرر الاسم باخد الاسم الموجود او الايميل
     if (!userParams.username) {
       userParams.username =
         userParams.username ||
         userParams.email ||
         `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     }
+//يتم انشأ سجل جديد بقلب  userblock قيتمه الابتدائية غير محظور
 
     if (!userParams.id) {
       const userBlock = new UserBlock();
       userBlock.isBlocked = false;
-
+//يتم إنشأ سجل جديد بقلب  UserDeleted قيمته الابتدائية غير محذوف
       const userDeleted = new UserDeleted();
       userDeleted.isDeleted = false;
-
+//يجلب حالة الحساب الافتراضية code=1يعني مفعل وطبعا بتحتاج صلاحيات اعلى ف نحن بحاجة ل maseterzkey
       const accountStatus = (await new Parse.Query(AccountStatus)
         .equalTo('code', '1')
         .first({useMasterKey: true})) as AccountStatus;
-
+//محفظ السجلات معا
       const [block, deleted] = await Promise.all([
         userBlock.save(null, {useMasterKey: true}),
         userDeleted.save(null, {useMasterKey: true}),
       ]);
-
+//يربط المستخدم بسجلات الحظر و الحذف وحالة الحسبا
       user.set({
         userBlock: block,
         deleted: deleted,
@@ -157,7 +158,7 @@ export default class User extends Parse.User {
       user,
     };
   }
-
+//إسناد دور لمستخدم
   static async assignRoleToUser(user: Parse.User, roleIdOrName: string) {
     const nameQuery = new Parse.Query(Parse.Role).equalTo('name', roleIdOrName);
     const idQuery = new Parse.Query(Parse.Role).equalTo(

@@ -15,6 +15,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
 }
 
 class ChatGroupParticipantFunctions {
+//حذف شخص ما من الدردشة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -78,6 +79,7 @@ class ChatGroupParticipantFunctions {
       };
     }
   }
+//وضع شخص في وضع ميوت
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -154,6 +156,7 @@ class ChatGroupParticipantFunctions {
       };
     }
   }
+//رفع وضع ميوت من على مستخدم معين
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -223,6 +226,7 @@ class ChatGroupParticipantFunctions {
       };
     }
   }
+//جلب جميع المستخدمين ل شات ما
   @CloudFunction({
     methods: ['POST'],
     validation: {

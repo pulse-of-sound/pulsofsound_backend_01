@@ -2,6 +2,7 @@ import { CloudFunction } from '../../utils/Registry/decorators';
 import AppointmentPlan from '../../models/AppointmentPlan';
 
 class AppointmentPlanFunctions {
+//إنشاء خطة دفع جديدة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -31,7 +32,7 @@ class AppointmentPlanFunctions {
       if (!user) {
         throw { codeStatus: 103, message: 'User context is missing' };
       }
-
+//تأكد من الدور
       const rolePointer = user.get('role');
       const role = await new Parse.Query(Parse.Role)
         .equalTo('objectId', rolePointer?.id)
@@ -66,7 +67,7 @@ class AppointmentPlanFunctions {
       };
     }
   }
-
+//جلب الخطط المتاحة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -76,14 +77,14 @@ class AppointmentPlanFunctions {
   })
   async getAvailableAppointmentPlans(req: Parse.Cloud.FunctionRequest) {
     try {
-      // التحقق من Session Token
+// التحقق من Session Token
       const sessionToken = (req as any).headers?.['x-parse-session-token'];
 
       if (!sessionToken) {
         throw { codeStatus: 101, message: 'Session token is required' };
       }
 
-      // البحث عن المستخدم باستخدام Session Token
+// البحث عن المستخدم باستخدام Session Token
       const sessionQuery = new Parse.Query(Parse.Session);
       sessionQuery.equalTo('sessionToken', sessionToken);
       sessionQuery.include('user');

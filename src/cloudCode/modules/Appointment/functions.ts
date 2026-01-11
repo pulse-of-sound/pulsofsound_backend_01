@@ -25,11 +25,11 @@ class AppointmentFunctions {
     try {
       // التحقق من Session Token
       const sessionToken = (req as any).headers?.['x-parse-session-token'];
-
+//يتحقق من وجود رمز الجلسة
       if (!sessionToken) {
         throw {codeStatus: 101, message: 'Session token is required'};
       }
-
+//ينشأ استعلام على كل الجلسات ويضمن المستخدم المناسب
       const sessionQuery = new Parse.Query(Parse.Session);
       sessionQuery.equalTo('sessionToken', sessionToken);
       sessionQuery.include('user');
@@ -43,7 +43,7 @@ class AppointmentFunctions {
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
-
+//يرمي خطأ إن لم يكون الدور مناسب 
       const rolePointer = user.get('role');
       const role = await new Parse.Query(Parse.Role)
         .equalTo('objectId', rolePointer?.id)
@@ -64,7 +64,7 @@ class AppointmentFunctions {
       if (!plan) {
         throw {codeStatus: 104, message: 'Appointment plan not found'};
       }
-
+//إنشاء موعد
       const appointment = new Appointment();
       appointment.set('user_id', user);
       appointment.set('provider_id', new Parse.User({id: provider_id}));
@@ -78,7 +78,7 @@ class AppointmentFunctions {
       appointment.set('created_at', new Date());
       appointment.set('updated_at', new Date());
       await appointment.save(null, {useMasterKey: true});
-
+//إنشاء فاتورة
       const invoice = new Invoice();
       invoice.set('appointment_id', appointment);
       invoice.set('amount', plan.get('price'));
@@ -100,6 +100,7 @@ class AppointmentFunctions {
       };
     }
   }
+  //جلب كل المواعيد المرتبطة بطفل معين
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -169,6 +170,7 @@ class AppointmentFunctions {
       };
     }
   }
+//أخذ تفاصيل طلب ما
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -246,6 +248,7 @@ class AppointmentFunctions {
       };
     }
   }
+//جلب كل المواعيد المعلقة 
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -353,7 +356,7 @@ class AppointmentFunctions {
       };
     }
   }
-
+//سماحية وصول لبيانات طفل معين في حال وجود موعد فعال بينهم
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -421,6 +424,7 @@ class AppointmentFunctions {
       };
     }
   }
+//طلب موافقة او رفض موعد 
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -448,7 +452,7 @@ class AppointmentFunctions {
       if (!user) throw {codeStatus: 103, message: 'User context is missing'};
 
       const {appointment_id, decision} = req.params;
-
+//حصرا الطلب إما رفض أو موافقة
       if (!['approve', 'reject'].includes(decision)) {
         throw {codeStatus: 105, message: 'Invalid decision value'};
       }
@@ -477,7 +481,7 @@ class AppointmentFunctions {
       await appointment.save(null, {useMasterKey: true});
 
       let chatGroup: Parse.Object | undefined;
-
+//إذا طلب موافقة نشوف الخطة والسعر
       if (decision === 'approve') {
         const plan = appointment.get('appointment_plan_id');
         if (!plan)
@@ -525,16 +529,16 @@ class AppointmentFunctions {
             message: 'Insufficient balance in requester wallet',
           };
         }
-
+//خصم سعر الخطة من المستخدم الى الاخصائي
         requesterWallet.set('balance', requesterBalance - price);
         const providerBalance = providerWallet.get('balance') || 0;
         providerWallet.set('balance', providerBalance + price);
-
+//حفظ حالة المحفظتين
         await Promise.all([
           requesterWallet.save(null, {useMasterKey: true}),
           providerWallet.save(null, {useMasterKey: true}),
         ]);
-
+//إنشلء عملية الدفع
         const paymentTx = new WalletTransaction();
         paymentTx.set('from_wallet', requesterWallet);
         paymentTx.set('to_wallet', providerWallet);
@@ -542,7 +546,7 @@ class AppointmentFunctions {
         paymentTx.set('type', 'payment');
         paymentTx.set('appointment_id', appointment);
         await paymentTx.save(null, {useMasterKey: true});
-
+//إنشاء شات
         chatGroup = new ChatGroup();
         chatGroup.set('appointment_id', appointment);
 
@@ -571,14 +575,14 @@ class AppointmentFunctions {
           await chatParticipant.save(null, {useMasterKey: true});
         }
       }
-
+//في حالة الرفض
       if (decision === 'reject') {
         const txQuery = new Parse.Query(WalletTransaction);
         txQuery.equalTo('appointment_id', appointment);
         txQuery.equalTo('type', 'payment');
         txQuery.include(['from_wallet', 'to_wallet']);
         const paymentTx = await txQuery.first({useMasterKey: true});
-
+//إرجاع الملبغ للمستخدم وخصمه من الطبيب
         if (paymentTx) {
           const fromWallet = paymentTx.get('from_wallet');
           const toWallet = paymentTx.get('to_wallet');
@@ -589,7 +593,7 @@ class AppointmentFunctions {
             toWallet.set('balance', fromBalance - amount);
             const toBalance = fromWallet.get('balance') || 0;
             fromWallet.set('balance', toBalance + amount);
-
+//حفظ العمليتين
             await Promise.all([
               fromWallet.save(null, {useMasterKey: true}),
               toWallet.save(null, {useMasterKey: true}),
@@ -645,6 +649,7 @@ class AppointmentFunctions {
       };
     }
   }
+//إلغاء طلب مازال معلق
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -686,7 +691,7 @@ class AppointmentFunctions {
           message: 'Unauthorized: You can only cancel your own appointments',
         };
       }
-
+//يلغى في حالة قيد الانتظار او بانتظار موافقة
       const status = appointment.get('status');
       if (status !== 'pending' && status !== 'pending_provider_approval') {
         throw {

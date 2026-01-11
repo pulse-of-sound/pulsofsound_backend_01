@@ -5,6 +5,7 @@ import {CloudFunction} from '../../utils/Registry/decorators';
 import {SystemRoles} from '../../utils/rols';
 
 class ChargeRequestFunctions {
+//طلب شحن محفظة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -63,7 +64,7 @@ class ChargeRequestFunctions {
       throw {codeStatus: 500, message: error.message || 'فشل إرسال طلب الشحن'};
     }
   }
-
+//جلب طلبات شحن المحفظة كل شخص حسب صلاحياته
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -140,7 +141,7 @@ class ChargeRequestFunctions {
       throw {codeStatus: 500, message: error.message};
     }
   }
-
+//الموافقة على طلبات الشحن
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -185,7 +186,7 @@ class ChargeRequestFunctions {
       throw {message: error.message};
     }
   }
-
+//رفض طلب الشحن
   @CloudFunction({
     methods: ['POST'],
     validation: {

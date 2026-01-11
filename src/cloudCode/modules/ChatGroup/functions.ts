@@ -17,6 +17,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
 }
 
 class ChatGroupFunctions {
+//إنشاء شات عند الموافقة على الطلب
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -94,7 +95,7 @@ class ChatGroupFunctions {
       };
     }
   }
-
+//جلب جميع الشات الخاصة بمستخدم
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -191,7 +192,7 @@ class ChatGroupFunctions {
           };
         })
       );
-
+//يحدث حالة الدردشة اذا انتهت مدة الموعد
       const communityQuery = new Parse.Query(ChatGroup);
       communityQuery.equalTo('chat_type', 'community');
       communityQuery.equalTo('chat_status', 'active');
@@ -219,6 +220,7 @@ class ChatGroupFunctions {
       };
     }
   }
+//جلب قائمة المشاركين في مجموعة دردشة معينة حسب chat_group_id
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -270,6 +272,7 @@ class ChatGroupFunctions {
       };
     }
   }
+//أرشفة مجموعة دردشة معينة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -329,6 +332,7 @@ class ChatGroupFunctions {
       };
     }
   }
+//إنشاء شات عامة
   @CloudFunction({
     methods: ['POST'],
     validation: {

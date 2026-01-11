@@ -17,6 +17,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
 }
 
 class ChatMessageFunctions {
+//إرسال رسالة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -48,11 +49,11 @@ class ChatMessageFunctions {
       if (!chatGroup) {
         throw {codeStatus: 104, message: 'Chat group not found'};
       }
-
+//تحديد نوع الدردشة
       const isCommunity = chatGroup.get('chat_type') === 'community';
       const appointment = chatGroup.get('appointment_id');
       const senderId = user.id;
-
+//تحديد المستلم اذا كانت شات خاصة
       let receiverId: string | null = null;
       if (!isCommunity && appointment) {
         const userA = appointment.get('user_id')?.id;
@@ -80,6 +81,7 @@ class ChatMessageFunctions {
         );
       }
       const chatStatus = chatGroup.get('chat_status');
+//إذا الرسالة مأرشفة ممنوع الإرسال
       if (chatStatus === 'archived') {
         throw {
           codeStatus: 403,
@@ -97,7 +99,7 @@ class ChatMessageFunctions {
             const startTime = chatGroup.createdAt.getTime();
             const currentTime = new Date().getTime();
             const elapsedMinutes = (currentTime - startTime) / (1000 * 60);
-
+//التأكد أن مدة الشات غير منتهية اذا خاصة
             if (elapsedMinutes > durationMinutes) {
               chatGroup.set('chat_status', 'archived');
               await chatGroup.save(null, {useMasterKey: true});
@@ -116,7 +118,7 @@ class ChatMessageFunctions {
           new Parse.Object('ChatGroup', {id: chat_group_id})
         );
         participantQuery.equalTo('user_id', user);
-
+//أن يكون مشارك بالشات وغير مكتوم
         const participant = await participantQuery.first({useMasterKey: true});
         if (!participant) {
           throw {
@@ -166,7 +168,7 @@ class ChatMessageFunctions {
       };
     }
   }
-
+//جلب جميع الرسائل لكل chat_group
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -285,6 +287,7 @@ class ChatMessageFunctions {
       };
     }
   }
+//تعليم أن رسالة في دردرشة هي مقروءة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -432,6 +435,7 @@ class ChatMessageFunctions {
       };
     }
   }
+//جلب سجل الرسائل لمجموهة دردشة معينة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -488,7 +492,7 @@ class ChatMessageFunctions {
       };
     }
   }
-
+//حذف شات
   @CloudFunction({
     methods: ['POST'],
     validation: {
