@@ -12,6 +12,7 @@ interface AnswerInput {
 }
 
 class StageResultFunctions {
+//تستقبل اجابات طفل 
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -33,7 +34,7 @@ class StageResultFunctions {
       console.log(' Level Game ID:', level_game_id);
       console.log(' Answers:', JSON.stringify(answers));
 
-      // الحصول على المستخدم من child_id
+// الحصول على المستخدم من child_id
       const userQuery = new Parse.Query(Parse.User);
       const user = await userQuery.get(child_id, {useMasterKey: true});
 

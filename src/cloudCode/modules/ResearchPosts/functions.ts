@@ -17,6 +17,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
 }
 
 class ResearchPostsFunctions {
+//ارسال طلب لنشر بحث
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -82,6 +83,7 @@ class ResearchPostsFunctions {
       post_id: post.id,
     };
   }
+//جلب المقالات الذين في حالة انتظار موافقة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -130,7 +132,7 @@ class ResearchPostsFunctions {
 
     return results;
   }
-
+//رفض او قبول بحث ما
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -179,6 +181,7 @@ class ResearchPostsFunctions {
       status: post.get('status'),
     };
   }
+//جلب كل الابحاق المنشورة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -222,7 +225,7 @@ class ResearchPostsFunctions {
 
     return results;
   }
-
+//البحث عن بحث ما عن طريق كلمة مفتاحية
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -272,7 +275,7 @@ class ResearchPostsFunctions {
 
     return results;
   }
-
+//جلب كل الابحاث الخاصة بمؤلف واحد
   @CloudFunction({
     methods: ['POST'],
     validation: {

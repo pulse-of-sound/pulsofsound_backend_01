@@ -2,6 +2,7 @@ import ChildProfile from '../../models/ChildProfile';
 import {CloudFunction} from '../../utils/Registry/decorators';
 
 class ChildProfile_ {
+//جلب بروفايل طفل
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -16,12 +17,12 @@ class ChildProfile_ {
       const {child_id} = req.params;
       let user: Parse.User | undefined;
 
-      // إذا كان child_id موجود، استخدمه
+// إذا كان child_id موجود استخدمه
       if (child_id) {
         const userQuery = new Parse.Query(Parse.User);
         user = await userQuery.get(child_id, {useMasterKey: true});
       } else if (req.user) {
-        // وإلا استخدم req.user إذا كان موجود
+// وإلا استخدم req.user إذا كان موجود
         user = req.user;
       } else {
         const sessionToken = (req as any).headers[
@@ -91,7 +92,7 @@ class ChildProfile_ {
       };
     }
   }
-
+//اذا وجد بروفايل عدل عليه واذا لم يوجد انشأه
   @CloudFunction({
     methods: ['POST'],
     validation: {

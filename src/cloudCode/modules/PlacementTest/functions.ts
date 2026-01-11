@@ -2,6 +2,7 @@ import {CloudFunction} from '../../utils/Registry/decorators';
 import PlacementTestQuestion from '../../models/PlacementTestQuestion';
 import PlacementTestCorrectAnswer from '../../models/PlacementTestCorrectAnswer';
 class PlacementTestFunctions {
+//جلب اسئلة اختبار الذكاء
   @CloudFunction({
     methods: ['GET'],
     validation: {
@@ -93,7 +94,7 @@ class PlacementTestFunctions {
       };
     }
   }
-
+//جلب سؤال عن طريق index
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -154,6 +155,7 @@ class PlacementTestFunctions {
       };
     }
   }
+//تطابق الاجابات وارجاع نتيجة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -212,7 +214,7 @@ class PlacementTestFunctions {
 
         if (isCorrect) correctCount++;
       }
-
+//يعتبر ناجح اذا كان <70
       const score = Math.round((correctCount / answers.length) * 100);
       const passed = score >= 70;
 

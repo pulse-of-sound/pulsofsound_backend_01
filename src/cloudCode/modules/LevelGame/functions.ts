@@ -3,6 +3,7 @@ import LevelGame from '../../models/LevelGame';
 import ChildLevel from '../../models/ChildLevel';
 
 class LevelGameFunctions {
+//إضافة مرحلة عن طريق الادمن
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -54,6 +55,7 @@ class LevelGameFunctions {
       };
     }
   }
+//جلب كل الالعاب الخاصة بمستوى معين
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -96,6 +98,7 @@ class LevelGameFunctions {
       };
     }
   }
+//نتحقق هل هنالك مرحلة تالية بعد الحالية داخل مستوى معين
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -135,6 +138,7 @@ class LevelGameFunctions {
       },
     };
   }
+//يقرر هل الطفل سينتقل للمرحلة التالية أم سيعيد الحالية
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -244,7 +248,7 @@ class LevelGameFunctions {
         message: 'ChildLevel record not found',
       };
     }
-
+//يجب الانتظار 24 ساعة لفتح المرحلة التالية
     const lastCompletedAt = childLevel.get('last_completed_at');
     if (lastCompletedAt) {
       const now = new Date();

@@ -15,6 +15,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
 }
 
 class ResearchCategoriesFunctions {
+//إنشاء بحث جديد
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -45,6 +46,7 @@ class ResearchCategoriesFunctions {
       category_id: category.id,
     };
   }
+//جلب كل الابحاث
   @CloudFunction({
     methods: ['POST'],
     validation: {

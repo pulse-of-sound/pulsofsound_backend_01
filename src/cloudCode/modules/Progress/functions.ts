@@ -40,7 +40,7 @@ async function _getUser(req: Parse.Cloud.FunctionRequest) {
     return null;
   }
 }
-
+//جلب تقدم طفل مع احصائيات
 class ProgressFunctions {
   @CloudFunction({
     methods: ['POST'],
@@ -91,7 +91,6 @@ class ProgressFunctions {
       const url = `http://localhost:1337/api/classes/StageResult?${queryParams.toString()}`;
       console.log(' Querying:', url);
 
-      // Make HTTP request
       const results = await new Promise<any[]>((resolve, reject) => {
         http
           .get(
@@ -129,7 +128,6 @@ class ProgressFunctions {
         recent_results: [] as any[],
       };
 
-      // Group by level
       const levelMap = new Map();
 
       for (const result of results) {
@@ -163,14 +161,14 @@ class ProgressFunctions {
         }
       }
 
-      // Calculate averages
+//حساب المتوسط
       if (stats.total_questions > 0) {
         stats.average_score = Math.round(
           (stats.total_score / stats.total_questions) * 100
         );
       }
 
-      // Calculate level averages
+//حساب متوسط المستويات
       for (const [levelId, levelStats] of levelMap.entries()) {
         if (levelStats.total_questions > 0) {
           levelStats.average_score = Math.round(
@@ -180,7 +178,7 @@ class ProgressFunctions {
         stats.levels_progress[levelId] = levelStats;
       }
 
-      // Get recent 10 results
+//الحصول على اخر 10 نتائج
       stats.recent_results = results.slice(0, 10).map((result: any) => ({
         result_id: result.objectId,
         score: result.score || 0,

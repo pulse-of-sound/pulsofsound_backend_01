@@ -4,6 +4,7 @@ import Invoice from '../../models/Invoice';
 import Notifications from '../../models/Notifications';
 
 class InvoiceFunctions {
+//إنشاء فاتورة لطلب موعد معين
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -32,7 +33,7 @@ class InvoiceFunctions {
       }
 
       const {appointment_id} = req.params;
-
+//يجلب الخطة لنعرف السعر
       const appointment = await new Parse.Query(Appointment)
         .include('appointment_plan_id')
         .get(appointment_id, {useMasterKey: true});
@@ -67,7 +68,7 @@ class InvoiceFunctions {
       };
     }
   }
-
+//يؤكد دفع الفاتورة مع ارسال الطلب للاخصائي
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -94,7 +95,7 @@ class InvoiceFunctions {
       if (!user) {
         throw {codeStatus: 103, message: 'User context is missing'};
       }
-
+//يجلب الفاتورة ويتأكد أنها مرتبطة بموعد
       const {invoice_id} = req.params;
 
       const invoice = await new Parse.Query(Invoice)

@@ -3,6 +3,7 @@ import StageQuestion from '../../models/StageQuestion';
 import LevelGame from '../../models/LevelGame';
 
 class StageQuestionFunctions {
+//إضافة اسئلة لمرحلة معينة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -62,7 +63,7 @@ class StageQuestionFunctions {
       };
     }
   }
-
+//حذف اسئلة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -105,6 +106,7 @@ class StageQuestionFunctions {
       };
     }
   }
+//تجلب كل الاسئلة المرتبطة بمرحلة معينة
   @CloudFunction({
     methods: ['POST'],
     validation: {

@@ -2,6 +2,7 @@ import Wallet from '../../models/Wallet';
 import { CloudFunction } from '../../utils/Registry/decorators';
 
 class WalletFunctions {
+//جلب الرصيد الحالي
   @CloudFunction({
     methods: ['POST'],
     validation: {

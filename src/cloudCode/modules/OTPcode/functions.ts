@@ -10,6 +10,7 @@ import {
 const OTP_EXPIRY_MS = parseInt(process.env.OTP_EXPIRY_MIN || '5') * 60 * 1000;
 
 class OTP_ {
+//يفوم بتوليد كود تحقق
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -28,7 +29,7 @@ class OTP_ {
       const dateNow = new Date().getTime();
       const otp = generateRandomInteger(6);
 
-      // Check for existing OTP
+//التحقق من وجود الرمز
       const check_old_verificationCode = await new Parse.Query(OTPcode)
         .equalTo('mobileNumber', mobileNumber)
         .first({useMasterKey: true});
@@ -47,7 +48,7 @@ class OTP_ {
         }
       }
 
-      // Create new OTP record
+//إنشاء سجب otp جديد
       const verificationCode = new OTPcode();
       verificationCode.mobileNumber = mobileNumber!;
       verificationCode.code = otp;
@@ -73,6 +74,7 @@ class OTP_ {
       };
     }
   }
+//إعادة إرسال الرمز
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -103,7 +105,7 @@ class OTP_ {
       };
     }
   }
-  // Add a function to verify OTP
+//التحقق من تطابق الرمز
   @CloudFunction({
     methods: ['POST'],
     validation: {

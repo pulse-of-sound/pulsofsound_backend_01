@@ -2,6 +2,7 @@ import Role from '../../models/Role';
 import {CloudFunction} from '../../utils/Registry/decorators';
 
 class RoleFunctions {
+//إنشاء دور
   @CloudFunction({
     methods: ['POST'],
     validation: {

@@ -6,6 +6,7 @@ import {catchError} from '../../utils/catchError';
 import LevelGame from '../../models/LevelGame';
 
 class ChildLevelFunctions {
+//يتأكد أن الطفل نجح في الاختبار
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -111,7 +112,7 @@ class ChildLevelFunctions {
       },
     };
   }
-
+//يقوم بتحديد المرحلة الحالية للطفل 
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -125,7 +126,7 @@ class ChildLevelFunctions {
     try {
       const {child_id} = req.params;
 
-      // لا نحتاج للتحقق من user نستخدم child_id مباشرة
+// لا نحتاج للتحقق من user نستخدم child_id مباشرة
       const userQuery = new Parse.Query(Parse.User);
       const childUser = await userQuery.get(child_id, {useMasterKey: true});
 
@@ -198,7 +199,7 @@ class ChildLevelFunctions {
       };
     }
   }
-
+//هل الطفل ينتقل الى المرحلة التالية أو يعيد نفس المرحلة
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -281,6 +282,7 @@ class ChildLevelFunctions {
       };
     }
   }
+//نفحص هل الطفل أنهى المستوى كامل أم لا
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -366,6 +368,7 @@ class ChildLevelFunctions {
       };
     }
   }
+//يتأكد هل الطفل اكمل مرحلة معنية ام لا
   @CloudFunction({
     methods: ['POST'],
     validation: {

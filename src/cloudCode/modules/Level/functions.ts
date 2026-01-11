@@ -1,6 +1,7 @@
 import {CloudFunction} from '../../utils/Registry/decorators';
 import Level from '../../models/Level';
 class LevelFunctions {
+//إضافة مستوى من قبل الأدمن
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -48,7 +49,7 @@ class LevelFunctions {
       };
     }
   }
-
+//جلب كل المستويات
   @CloudFunction({
     methods: ['GET', 'POST'],
     validation: {
@@ -74,7 +75,7 @@ class LevelFunctions {
       levels,
     };
   }
-
+//جلب المستوى عن طريق id
   @CloudFunction({
     methods: ['POST'],
     validation: {
@@ -103,7 +104,7 @@ class LevelFunctions {
       level: level.toJSON(),
     };
   }
-
+//حذف مستوى
   @CloudFunction({
     methods: ['POST'],
     validation: {
