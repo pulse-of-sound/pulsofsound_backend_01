@@ -16,6 +16,9 @@ import UserDeleted from './UserDelete';
   },
 })
 export default class User extends Parse.User {
+    user(user: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor() {
     super();
   }
