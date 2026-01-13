@@ -167,7 +167,6 @@ describe('LevelFunctions', () => {
       expect(result.level).toHaveProperty('objectId', 'l1');
     });
   });
-  // deleteLevel
 //المستوى غير موجود
   describe('deleteLevel', () => {
     it('should throw error if level not found', async () => {
